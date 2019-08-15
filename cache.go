@@ -3,6 +3,7 @@ package gocache
 import (
 	"errors"
 	"sync"
+	"time"
 )
 
 //CacheItem holds the interface type to be cached
@@ -12,16 +13,18 @@ type CacheItem struct {
 
 //Cache holds the cached items
 type Cache struct {
-	Name  string
-	Items map[string]*CacheItem
+	Name     string
+	Items    map[string]*CacheItem
+	Lifetime int
 	sync.RWMutex
 }
 
 //New creates a pointer to a Cache type
-func New(name string) *Cache {
+func New(name string, cacheLifetime int) *Cache {
 	c := &Cache{
-		Name:  name,
-		Items: make(map[string]*CacheItem),
+		Name:     name,
+		Lifetime: cacheLifetime,
+		Items:    make(map[string]*CacheItem),
 	}
 
 	return c
@@ -41,6 +44,13 @@ func (c *Cache) AddOrUpdate(key string, data interface{}) {
 	}
 
 	c.Items[key] = x
+
+	if c.Lifetime != 0 {
+		go func() {
+			time.Sleep(2 * time.Second)
+			c.Remove(key)
+		}()
+	}
 
 }
 
