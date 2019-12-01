@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	cache = gocache.New("test", 3)
+	cache = gocache.New("test")
 )
 
 func main() {
 
-	cache.AddOrUpdate("key", "value")
+	cache.AddOrUpdate("key", "value", 2)
 	v, _ := cache.Fetch("key")
 	fmt.Println(v)
-	cache.AddOrUpdate("key", "newvalue")
+	cache.AddOrUpdate("key", "newvalue", 2)
 	s, _ := cache.Fetch("key")
 	fmt.Println(s)
 	time.Sleep(5 * time.Second)
