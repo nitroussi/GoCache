@@ -10,7 +10,8 @@ import (
 type CacheItem struct {
 	Item interface{}
 	sync.RWMutex
-	Lifetime int
+	Lifetime   int
+	LastUpdate time.Time
 }
 
 //Cache holds the cached items
@@ -30,23 +31,26 @@ func New(name string) *Cache {
 
 //AddOrUpdate adds an item to the cache if it doesnt exist, if it does exist, its value is updated.
 //Lifetime is a value in seconds, a lifetime of 0 means no cache.
-func (c *Cache) AddOrUpdate(key string, data interface{}, lifetime int) {
+func (c *Cache) AddOrUpdate(key string, data interface{}, lifetime int) interface{} {
 
 	c.RLock()
 
 	cacheItem, ok := c.Items[key]
 
-	//update happy path
+	//update the value if it already exists
 	if ok {
+		existingCacheItem := cacheItem.Item
 		cacheItem.Item = data
+		cacheItem.LastUpdate = time.Now()
 		c.RUnlock()
-		return
+		return existingCacheItem
 	}
 
 	//we need to create a new cache item
 	c.RUnlock()
 	x := &CacheItem{
-		Item: data,
+		Item:       data,
+		LastUpdate: time.Now(),
 	}
 	c.Lock()
 	c.Items[key] = x
@@ -58,6 +62,8 @@ func (c *Cache) AddOrUpdate(key string, data interface{}, lifetime int) {
 			c.Remove(key)
 		}()
 	}
+
+	return nil
 
 }
 
